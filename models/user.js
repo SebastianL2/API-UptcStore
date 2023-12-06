@@ -5,30 +5,37 @@ const userSchema = new Schema({
     
     name: {
         type: String,
-        required: true
+        
     },
     lastname:{
         type: String,
-        required: true
+        
     },
     email:{
         type: String,
-        required: true,
         lowercase: true,
         unique: true,
         trim: true
     },
     password:{
         type: String,
-        required: true
+        
     },
     phone:{
         type: Number,
-        required: true
+        
+    },
+    photo:{
+        secure_url: String,
+        public_id: String
+    },
+    city:{
+        type: String,
+        
     },
     role: {
         type: String,
-        enum: ['customer', 'admin'],
+        enum: ['customer', 'admin','seller'],
         default: 'customer',
     }
 

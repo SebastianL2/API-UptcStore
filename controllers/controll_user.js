@@ -4,8 +4,10 @@ import nodemailer from 'nodemailer'
 
 export const saveUser = async (req, res) => {
     try {
-        const { id, name, lastname, email, password, phone, role } = req.body
+        const { id, name, lastname, email, password, phone,city, role } = req.body
         const User = await user.findOne({ email: email });
+        console.log("e aui pp: ", req.body.secure_url)
+       
         if (!User) {
 
             const salt = await bcrypt.genSalt(10)
@@ -17,7 +19,13 @@ export const saveUser = async (req, res) => {
                 email,
                 password: hashedPassword,
                 phone,
+                photo: {
+                    public_id: req.body.public_id,
+                    secure_url: req.body.secure_url
+                  },
+                city,
                 role
+
             })
             const dataUserSave = await newUser.save()
             return res.status(200).json({
@@ -25,7 +33,7 @@ export const saveUser = async (req, res) => {
                 "dataUserSave": dataUserSave
             })
         } else {
-            return res.status(200).json({
+            return res.status(409).json({
                 "status": false,
                 "message": "Correo ya registrado"
             })
@@ -33,7 +41,11 @@ export const saveUser = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             "status": false,
-            "error": error
+            "error": {
+                message: error.message || "Error desconocido",
+                stack: error.stack  // Puede ser útil para obtener detalles de la pila
+                // Otros detalles que consideres relevantes
+            }
         })
     }
 }
@@ -88,19 +100,32 @@ export const deleteUser = async (req, res) => {
 }
 
 export const updateUser = async (req, res) => {
+
     try {
+    
         const id = req.params.id
-        const { name, lastname, email, password, phone, role } = req.body
-        const salt = await bcrypt.genSalt(10)
-        const hashedPassword = await bcrypt.hash(password, salt)
-        const userUpdated = await user.findByIdAndUpdate(id, {
+        const {  name, lastname, email, phone,city, role } = req.body
+ 
+        const userUpdateData = {
             name,
             lastname,
             email,
-            password: hashedPassword,
             phone,
+            city,
             role
-        }, { new: true })
+          };
+          
+          // Verifica si req.body.secure_url está presente
+          if (req.body.secure_url) {
+            // Si está presente, actualiza solo la propiedad photo.secure_url
+            userUpdateData.photo = {
+              public_id: req.body.public_id,
+              secure_url: req.body.secure_url
+            };
+          }
+          
+          const userUpdated = await user.findByIdAndUpdate(id, userUpdateData, { new: true });
+          
         return res.status(200).json({
             "status": true,
             "userUpdated": userUpdated
@@ -108,7 +133,8 @@ export const updateUser = async (req, res) => {
     } catch (error) {
         return res.status(500).json({
             "status": false,
-            "error": error
+            "error": error.message
+            
         })
     }
 }
@@ -178,8 +204,14 @@ export const loginAdminSeller = async (req, res) => {
         return res.status(200).json({
             "status": true,
             "message": "Inicio de sesión exitoso",
+            "id": User.id,
             "name": User.name,
-            "email": User.email
+            "email": User.email,
+            "lastname":User.lastname,
+            "phone":User.phone,
+            "photo": User.photo,
+            "city":User.city
+
         });
 
     } catch (error) {
